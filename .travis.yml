@@ -11,7 +11,8 @@ before_install:
 
 script:
   - docker run aiida_cp2k_test /bin/bash -c "pre-commit run --all-files || ( git status --short ; git diff ; exit 1 )"
-  - docker run aiida_cp2k_test /bin/bash -c "reentry scan && sudo service rabbitmq-server start && pytest -vv"
+  - ci_env=`bash <(curl -s https://codecov.io/env)`
+  - docker run $ci_env aiida_cp2k_test /bin/bash -c "reentry scan && sudo service rabbitmq-server start && pytest --cov=./aiida_cp2k -vv && codecov"
 
 git:
   depth: 3
