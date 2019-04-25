@@ -31,6 +31,11 @@ class Cp2kInput:
             # passed-in dictionary
             self._params = deepcopy(params)
 
+    @property
+    def params(self):
+        """get a copy of the internal nested dictionary"""
+        return deepcopy(self._params)
+
     def add_keyword(self, kwpath, value):
         """
         Add a value for the given keyword.
@@ -47,6 +52,7 @@ class Cp2kInput:
         Cp2kInput._add_keyword(kwpath, value, self._params)
 
     def to_string(self):
+        """Return the CP2K input file structure as a string"""
         output = [self.DISCLAIMER]
         self._render_section(output, self._params)
         return "\n".join(
@@ -54,6 +60,7 @@ class Cp2kInput:
         )
 
     def to_file(self, fhandle):
+        """Write the CP2K input file structure to the given file descriptor"""
         fhandle.write(u"{self.DISCLAIMER}".format(self=self))
         for line in Cp2kInput._render_section(self._params):
             fhandle.write(u"\n{line}".format(line=line))

@@ -18,11 +18,13 @@ from aiida_cp2k.utils import Cp2kInput
 def test_render_empty():
     inp = Cp2kInput()
     assert inp.to_string() == inp.DISCLAIMER
+    assert inp.params == {}
 
 
 def test_render_str_val():
     inp = Cp2kInput({"FOO": "bar"})
     assert inp.to_string() == "{inp.DISCLAIMER}\nFOO bar".format(inp=inp)
+    assert inp.params == {"FOO": "bar"}
 
 
 def test_add_keyword():
