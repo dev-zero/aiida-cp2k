@@ -1,6 +1,6 @@
 {
     "version": "1.0.0b2",
-    "name": "aiida_cp2k",
+    "name": "aiida_cp2k_ng",
     "url": "https://github.com/aiidateam/aiida-cp2k",
     "license": "MIT License",
     "author": "Ole Schütt, Edward Ditler, Aliaksandr Yakutovich, Patrick Seewald, Tiziano Müller, Andreas Glöss, Leonid Kahle",
