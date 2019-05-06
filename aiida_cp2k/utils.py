@@ -36,11 +36,6 @@ class Cp2kInput:
             # passed-in dictionary
             self._params = deepcopy(params)
 
-    @property
-    def params(self):
-        """get a copy of the internal nested dictionary"""
-        return deepcopy(self._params)
-
     def add_keyword(self, kwpath, value):
         """
         Add a value for the given keyword.
@@ -55,6 +50,27 @@ class Cp2kInput:
             kwpath = kwpath.split("/")
 
         Cp2kInput._add_keyword(kwpath, value, self._params)
+
+    @property
+    def params(self):
+        """get a copy of the internal nested dictionary"""
+        return deepcopy(self._params)
+
+    def param_iter(self, keywords=True, sections=True):
+        """Iterator yielding ((section,section,...,section/keyword), value) tuples"""
+        stack = [((k,), v) for k, v in self._params.items()]
+
+        while stack:
+            key, value = stack.pop(0)
+            if isinstance(value, Mapping):
+                if sections:
+                    yield (key, value)
+                stack += [(key + (k,), v) for k, v in value.items()]
+            elif isinstance(value, MutableSequence):
+                for entry in value:
+                    stack += [(key, entry)]
+            else:
+                yield (key, value)
 
     def to_string(self):
         """Return the CP2K input file structure as a string"""

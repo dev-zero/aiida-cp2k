@@ -123,6 +123,24 @@ def test_invalid_preprocessor():
         inp.to_string()
 
 
+def test_param_iter():
+    inp = Cp2kInput(
+        {"FORCE_EVAL": [{"FOO": "bar"}, {"FOO": "baz"}, {"FOO": "boo", "BOO": "hoo"}]}
+    )
+    assert list(inp.param_iter(sections=False)) == [
+        (("FORCE_EVAL", "FOO"), "bar"),
+        (("FORCE_EVAL", "FOO"), "baz"),
+        (("FORCE_EVAL", "FOO"), "boo"),
+        (("FORCE_EVAL", "BOO"), "hoo"),
+    ]
+
+    inp = Cp2kInput({"KIND": [{"_": "H"}, {"_": "O"}]})
+    assert list(inp.param_iter(sections=False)) == [
+        (("KIND", "_"), "H"),
+        (("KIND", "_"), "O"),
+    ]
+
+
 def test_string_file_equal_output():
     params = {
         "FORCE_EVAL": {
