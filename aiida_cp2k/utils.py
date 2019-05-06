@@ -17,6 +17,11 @@ import math
 import six
 import regex as re
 
+if six.PY2:
+    from collections import Mapping, MutableSequence
+else:
+    from collections.abc import Mapping, MutableSequence
+
 
 class Cp2kInput:
     """Transforms dictionary into CP2K input"""
@@ -111,11 +116,6 @@ class Cp2kInput:
                   &END KIND
         """
 
-        if six.PY2:
-            from collections import Mapping, Sequence
-        else:
-            from collections.abc import Mapping, Sequence
-
         for key, val in sorted(params.items()):
             # the `_` is reserved for section params and evaluated in the prior call
             if key == "_":
@@ -141,7 +141,7 @@ class Cp2kInput:
                     yield item
                 yield "{ispace}&END {key}".format(ispace=ispace, key=key)
 
-            elif isinstance(val, Sequence) and not isinstance(val, six.string_types):
+            elif isinstance(val, MutableSequence):
                 for listitem in val:
                     # once we are on Python3-only, replace the following with a `yield from ...`
                     for line in Cp2kInput._render_section({key: listitem}, indent):
