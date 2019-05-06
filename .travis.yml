@@ -1,26 +1,21 @@
-sudo: required
-
 language: minimal
-
+env:
+  global:
+  - TWINE_USERNAME: dev-zero
+  - secure: "XeIM563nFX3B/o8HpQ+Jn6RuKCQF27bpSG+GTE4KhzDlYUFt1fIkKXkaFTlXD0APzS48/ARGcJAskmDGZ4i08PeHJjVvD45Hr1UgPqbAPIg01DUq8vwUQGP6ZlZuirNRSqEuwtTXmVq8OWl6L2WNBvCrWY+jYUQGLwEsg5jeSp2WQ7pehpcrsBQeEQ/1iuEd3w47C74SF3AOZ/1VEM2Nx25Beq/Qc1sqsT4HBS4b7/wYgmJpsY8e93gC/Qd1K8UVXjGlic86vA3NwQW2kjxVD3l5qR8uuA5d11e63EJNV/rQaNoYBBiNYKhU6m/DFjjxitqwd6+2PUJM27T5JiHFmuKkKMdFb9UrQ3zgNVFSogeRHwMisNJ6Fi6h6rk3nSsVFzmQfpApKrBIBOKkKyOKFSBpSdg5Cb1usgRoMeghkf4huTx0CJrn6EZuYvtQSclLZqgKWPHbqXNSrEPBcWbDjh1+qNncsoIaDLVzaV+uaxgaHd9nYt8yt5Iy6S3/RWceST+uOMHEeBAI+YRBN/wFHERJUkD/yfwChVBmOso07sAZ2M1Egaq4Hnl1GLxpE/9aD2MYAzYw5f91Oy1/JtTuX82H39dDTCBNaubbsdzbJEQXTmwSUs9Cv/p6BeKi8YKl83kN2GISSrvNfqG5StF0C/J793t+XynPRw2gJ65lX20="
 services:
-  - docker
-
+- docker
 before_install:
-  - python .ci/check_travis_tag.py
-  - docker build -t aiida_cp2k_test .
-
+- python .ci/check_travis_tag.py
+- docker build -t aiida_cp2k_test .
 script:
-  - docker run aiida_cp2k_test /bin/bash -c "pre-commit run --all-files || ( git status --short ; git diff ; exit 1 )"
-  - ci_env=`bash <(curl -s https://codecov.io/env)`
-  - docker run $ci_env aiida_cp2k_test /bin/bash -c "reentry scan && sudo service rabbitmq-server start && pytest --cov=./aiida_cp2k -vv && codecov"
-
+- docker run aiida_cp2k_test /bin/bash -c "pre-commit run --all-files || ( git status --short ; git diff ; exit 1 )"
+- ci_env=`bash <(curl -s https://codecov.io/env)`
+- docker run $ci_env aiida_cp2k_test /bin/bash -c "reentry scan && sudo service rabbitmq-server start && pytest --cov=./aiida_cp2k -vv && codecov"
 git:
   depth: 3
-
-# deploy:
-#   provider: pypi
-#   user: "oschuett"
-#   password:
-#     secure: "O7tSCotn8NXF5JQppD+6hDFSsFd8SkHN9GT3lDIfsuKQ1gJiFQ1NW9mowH71l0qnAFO62Uf3oHC/dkrqH9/zYPlSZzx+InTPHMQiE/utHjj1xJGUW3iDTbV/mSOLLy2x0Vum7A3yrz3xjX0KzUEIfnU1LZ7fsUCpaYJQ0M70DQiDnEicNsm9VXRJNhLrrcbhE4Q8+ufOgjo+Yzy7Hmk6ezPr+K5rZEPqtwGsmxZgufN/JZwaSrzSldo0zRQtxFHtMSOgwQXRyzM+mb2ZixTt0YfbtpxHNhazrszZTUCnoHGmXn9HJFFVYD27iyqnqz8jfKKw9dcoi3EZhJZT1hg0GntYDgrrk9ZGP2Ea9zT7F+dsknDV2jjLalo0NIeesWp1BH2N+uxSjRIgJtVzwMqLWmvkaoHnF8bOGBIQa+O90NMSWmLDa8letDyK76lnnSJIvCY16DwFNk7xAnE5fZ6OWOu7jO4gMs+bUVt90sIk8gzzS83T6Ni/UGp4VhU/nyRWJWBraWTqZUI7UJZdM6G9BnfTzWlKMbmgECibAtZIvJI/ofUzYzgjB/HOb1DCBC3vboMgNyjJeQLIQvJ7HjGW9s6oUUmkIRJXjUyIjTviKNY99HOXtOgxnDCKgK3+Z2yv2muEZ9sAfJ2bSCpfSRrVR2Wvmuf56R9eg8shFNDO5yY="
-#   on:
-#     tags: true
+deploy:
+  provider: script
+  script: docker run -e TWINE_USERNAME -e TWINE_PASSWORD aiida_cp2k_test /bin/bash -c "python setup.py sdist bdist_wheel ; twine upload --verbose dist/*"
+  on:
+    tags: true

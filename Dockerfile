@@ -30,7 +30,7 @@ RUN apt-get update && apt-get install -yq --no-install-recommends \
     python3-setuptools    \
   && rm -rf /var/lib/apt/lists/*
 
-RUN pip install codecov pytest-cov
+RUN pip install codecov pytest-cov twine
 
 # set a unicode-enabled locale by default, and make sure the locale files are available
 RUN set -eux; \
