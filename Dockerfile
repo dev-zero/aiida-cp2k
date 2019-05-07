@@ -46,5 +46,8 @@ COPY --chown=ubuntu:ubuntu . /opt/aiida-cp2k
 WORKDIR /opt/aiida-cp2k/
 RUN pip install .[pre-commit,testing]
 
+# Fix pgtest, see https://github.com/jamesnunn/pgtest/issues/14
+RUN sed -i -e 's|\(max_connections\)=11|\1=15|' /usr/local/lib/python2.7/dist-packages/pgtest/pgtest.py
+
 # switch to an unprivileged user
 USER ubuntu
