@@ -1,4 +1,7 @@
 # AiiDA CP2K
+
+[![Build Status](https://travis-ci.com/dev-zero/aiida-cp2k.svg?branch=develop)](https://travis-ci.com/dev-zero/aiida-cp2k) [![codecov](https://codecov.io/gh/dev-zero/aiida-cp2k/branch/develop/graph/badge.svg)](https://codecov.io/gh/dev-zero/aiida-cp2k)
+
 **The CP2K plugin for the AiiDA workflow and provenance engine.**
 
 
