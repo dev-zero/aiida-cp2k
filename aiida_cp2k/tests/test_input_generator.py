@@ -67,6 +67,10 @@ def test_add_keyword_invariant_input():
     assert inp.to_string() == "{inp.DISCLAIMER}\nBAR boo\nFOO bar".format(inp=inp)
     assert param == {"FOO": "bar"}
 
+    # make sure two calls return the same thing
+    inp = Cp2kInput({"FOO": "bar", "&BAZ": [{"BOO": 1}, {"BOO": 2}]})
+    assert inp.to_string() == inp.to_string()
+
 
 def test_multiple_force_eval():
     inp = Cp2kInput({"FORCE_EVAL": [{"FOO": "bar"}, {"FOO": "bar"}, {"FOO": "bar"}]})
