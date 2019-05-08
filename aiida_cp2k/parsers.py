@@ -36,7 +36,7 @@ class Cp2kParser(Parser):
         try:
             structure = self._parse_trajectory(out_folder)
             self.out("output_structure", structure)
-        except Exception:  # pylint: disable=broad-except
+        except Exception:
             pass
 
         return ExitCode(0)
@@ -46,13 +46,12 @@ class Cp2kParser(Parser):
 
         from aiida.orm import BandsData, Dict
 
-        # pylint: disable=protected-access
-
-        fname = self.node.process_class._DEFAULT_OUTPUT_FILE
-        if fname not in out_folder._repository.list_object_names():
-            raise OutputParsingError("Cp2k output file not retrieved")
-
-        abs_fn = os.path.join(out_folder._repository._get_base_folder().abspath, fname)
+        # since the _DEFAULT_OUTPUT_FILE is the redirected stdout, AiiDA will ensure
+        # that the file is there, even if the command were to be completely invalid
+        abs_fn = os.path.join(
+            out_folder._repository._get_base_folder().abspath,
+            self.node.process_class._DEFAULT_OUTPUT_FILE,
+        )
 
         with io.open(abs_fn, mode="r", encoding="utf-8") as fobj:
             result_dict = parse_cp2k_output(fobj)
@@ -78,8 +77,6 @@ class Cp2kParser(Parser):
 
         from ase import Atoms
         from aiida.orm import StructureData
-
-        # pylint: disable=protected-access
 
         fname = self.node.process_class._DEFAULT_RESTART_FILE_NAME
 
