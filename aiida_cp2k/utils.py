@@ -144,6 +144,19 @@ class Cp2kInput:
             if key.startswith(("@", "$")):
                 raise ValueError("CP2K preprocessor directives not supported")
 
+            if key.startswith("&"):
+                # we have to allow an explicit section prefix to be able to distinguish
+                # between sections and keywords with the same name which can occur in CP2K input
+                if isinstance(val, (Mapping, MutableSequence)):
+                    # simply strip the section prefix if present
+                    key = key.strip("&")
+                else:
+                    raise ValueError(
+                        "invalid section prefix '&' encountered in bare keyword '{key}'".format(
+                            key=key
+                        )
+                    )
+
             ispace = " " * indent
 
             if isinstance(val, Mapping):
