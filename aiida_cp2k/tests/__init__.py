@@ -103,3 +103,16 @@ def get_code(entry_point, computer=None):
         code.store()
 
     return code
+
+
+def gaussian_datatypes_available():
+    from aiida.plugins import DataFactory
+    from aiida.common.exceptions import LoadingEntryPointError, MissingEntryPointError
+
+    try:
+        DataFactory("gaussian.basisset")
+        DataFactory("gaussian.pseudo")
+    except (LoadingEntryPointError, MissingEntryPointError):
+        return False
+
+    return True

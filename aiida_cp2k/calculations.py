@@ -10,10 +10,42 @@
 from __future__ import absolute_import
 
 import io
+import re
 import six
 from aiida.engine import CalcJob
 from aiida.orm import Dict, SinglefileData, StructureData, RemoteData, BandsData
 from aiida.common import CalcInfo, CodeInfo, InputValidationError
+
+
+def _validate_basissets_namespace(_, bsets_dict):
+    for slabel, section in bsets_dict.items():
+        if not re.match(r"FORCE_EVAL(_\d+)?$", slabel):
+            return "top-level basis set label '{slabel}' is not of the form 'FORCE_EVAL(_N)?' (with N being an integer)".format(
+                slabel=slabel
+            )
+
+        for bsets in section.values():  # (symbol,{"TYPE[IDX]": BSET})
+            for tlabel in bsets.keys():
+                if not re.match(
+                    r"[A-Z]+(_\d+)?$", tlabel
+                ):  # accept all sort of labels for basissets for now
+                    return "invalid basis set type '{tlabel}' specified".format(
+                        tlabel=tlabel
+                    )
+
+
+def _find_basisset_in_input(symbol, bsname, bstype, basissets):
+    for feval in basissets.values():
+        for kwsym, bsets in feval.items():  # (symbol,{"TYPE[IDX]": BSET})
+            if kwsym != symbol:
+                continue
+
+            for tlabel, bset in bsets.items():
+                if not tlabel.startswith(bstype):
+                    continue
+
+                if bset.name == bsname:
+                    return bset
 
 
 class Cp2kCalculation(CalcJob):
@@ -87,6 +119,14 @@ class Cp2kCalculation(CalcJob):
             non_db=True,
         )
 
+        spec.input_namespace(
+            "basissets",
+            dynamic=True,
+            required=False,
+            validator=_validate_basissets_namespace,
+        )
+        spec.input_namespace("pseudos", dynamic=True, required=False)
+
         # Exit codes
         spec.exit_code(
             100,
@@ -114,7 +154,73 @@ class Cp2kCalculation(CalcJob):
             help="optional band structure",
         )
 
-    # --------------------------------------------------------------------------
+    def _validate_basissets(self, inp):
+        for secpath, section in inp.param_iter(keywords=False, sections=True):
+            if secpath[-1].upper() == "KIND":
+                symbol = section["_"]
+
+                # the BASIS_SET keyword can be repeated, even for the same type
+                if "BASIS_SET" in section:
+                    bsnames = section["BASIS_SET"]
+
+                    # the keyword BASIS_SET can occur multiple times in which case
+                    # the specified basis sets are merged (given they match the same type)
+                    if isinstance(bsnames, six.string_types):
+                        bsnames = [bsnames]
+
+                    for bsname in bsnames:
+                        # test for new-style basis set specification
+                        try:
+                            bstype, bsname = bsname.split(maxsplit=1)
+                        except ValueError:
+                            bstype = "ORB"
+
+                        if not _find_basisset_in_input(
+                            symbol, bsname, bstype, self.inputs.basissets
+                        ):
+                            raise InputValidationError(
+                                (
+                                    "'BASIS_SET {bstype} {bsname}' for element {symbol}"
+                                    " not found in basissets input namespace"
+                                ).format(bsname=bsname, bstype=bstype, symbol=symbol)
+                            )
+
+                for bstype in ("AUX", "AUX_FIT", "LRI", "RI_AUX"):
+                    key = "{bstype}_BASIS_SET".format(bstype=bstype)
+                    if key in section and not _find_basisset_in_input(
+                        symbol, section[key], bstype, self.inputs.basissets
+                    ):
+                        raise InputValidationError(
+                            (
+                                "BasisSet '{bsname}' ({bstype} type) for element {symbol}"
+                                " not found in basissets input namespace"
+                            ).format(bsname=bsname, bstype=bstype, symbol=symbol)
+                        )
+
+    def _write_basissets(self, inp, folder):
+        # inject basis set file into all FORCE_EVAL/DFT sections
+        for secpath, section in inp.param_iter(keywords=False, sections=True):
+            if secpath[-1].upper() == "DFT":
+                section["BASIS_SET_FILE_NAME"] = "BASIS_SETS"
+
+        with io.open(
+            folder.get_abs_path("BASIS_SETS"), mode="w", encoding="utf-8"
+        ) as fhandle:
+            for section in self.inputs.basissets.values():
+                for btypes in section.values():  # (symbol,{"TYPE[IDX]": BSET})
+                    for bset in btypes.values():
+                        bset.to_cp2k(fhandle)
+
+    def _validate_pseudos(self, inp):
+        raise RuntimeError("not yet implemented")
+
+    def _write_pseudos(self, inp, folder):
+        with io.open(
+            folder.get_abs_path("POTENTIALS"), mode="w", encoding="utf-8"
+        ) as fhandle:
+            for pseudo in self.inputs.pseudos.values():
+                pseudo.to_cp2k(fhandle)
+
     def prepare_for_submission(self, folder):
         """Create the input files from the input nodes passed to this instance of the `CalcJob`.
 
@@ -141,6 +247,14 @@ class Cp2kCalculation(CalcJob):
             topo = "FORCE_EVAL/SUBSYS/TOPOLOGY"
             inp.add_keyword(topo + "/COORD_FILE_NAME", self._DEFAULT_COORDS_FILE_NAME)
             inp.add_keyword(topo + "/COORD_FILE_FORMAT", "XYZ")
+
+        if self.inputs.basissets:
+            self._validate_basissets(inp)
+            self._write_basissets(inp, folder)
+
+        if self.inputs.pseudos:
+            self._validate_pseudos(inp)
+            self._write_pseudos(inp, folder)
 
         with io.open(
             folder.get_abs_path(self._DEFAULT_INPUT_FILE), mode="w", encoding="utf-8"
