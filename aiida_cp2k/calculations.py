@@ -17,7 +17,7 @@ from aiida.orm import Dict, SinglefileData, StructureData, RemoteData, BandsData
 from aiida.common import CalcInfo, CodeInfo, InputValidationError
 
 
-def _validate_basissets_namespace(_, bsets_dict):
+def _validate_basissets_namespace(bsets_dict):
     for slabel, section in bsets_dict.items():
         if not re.match(r"FORCE_EVAL(_\d+)?$", slabel):
             return "top-level basis set label '{slabel}' is not of the form 'FORCE_EVAL(_N)?' (with N being an integer)".format(
