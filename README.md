@@ -85,6 +85,16 @@ print(calc.res.nwarnings, calc.res.energy, calc.res.energy_units)
 
 - The Python code complies with the [Flake8](http://flake8.pycqa.org) coding conventions.
 
+# Usage
+
+There is a small command line interface to get you started immediately.
+After setting up a code (see the corresponding AiiDA documentation), you can run any CP2K calculation directly through AiiDA:
+
+```
+aiida-cp2k calc oneshot --code cp2k@yourhost some_cp2k_input_file.inp
+```
+
+Files referenced in `some_cp2k_input_file.inp` which are not part of the default CP2K installation (like `BASIS_SET`, etc.) must be specified additionally.
 
 # Testing
 

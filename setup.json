@@ -24,6 +24,9 @@
         ],
         "aiida.parsers": [
             "cp2k = aiida_cp2k.parsers:Cp2kParser"
+        ],
+        "console_scripts": [
+            "aiida-cp2k = aiida_cp2k.cli:root"
         ]
     },
     "setup_requires": ["reentry"],
