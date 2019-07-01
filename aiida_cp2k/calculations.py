@@ -257,7 +257,9 @@ class Cp2kCalculation(CalcJob):
             self._write_pseudos(inp, folder)
 
         with io.open(
-            folder.get_abs_path(self._DEFAULT_INPUT_FILE), mode="w", encoding="utf-8"
+            folder.get_abs_path(self.inputs.metadata.options.input_filename),
+            mode="w",
+            encoding="utf-8",
         ) as fobj:
             try:
                 inp.to_file(fobj)
@@ -278,7 +280,7 @@ class Cp2kCalculation(CalcJob):
         codeinfo = CodeInfo()
         codeinfo.cmdline_params = settings.pop("cmdline", []) + [
             "-i",
-            self._DEFAULT_INPUT_FILE,
+            self.inputs.metadata.options.input_filename,
         ]
         codeinfo.stdout_name = self._DEFAULT_OUTPUT_FILE
         codeinfo.join_files = True
@@ -286,10 +288,9 @@ class Cp2kCalculation(CalcJob):
 
         # create calc info
         calcinfo = CalcInfo()
-        calcinfo.stdin_name = self._DEFAULT_INPUT_FILE
+        calcinfo.stdin_name = self.inputs.metadata.options.input_filename
         calcinfo.uuid = self.uuid
         calcinfo.cmdline_params = codeinfo.cmdline_params
-        calcinfo.stdin_name = self._DEFAULT_INPUT_FILE
         calcinfo.stdout_name = self._DEFAULT_OUTPUT_FILE
         calcinfo.codes_info = [codeinfo]
 
