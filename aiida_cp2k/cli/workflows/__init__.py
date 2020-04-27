@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# pylint: disable=cyclic-import,unused-import,wrong-import-position
+# pylint: disable=cyclic-import,unused-import,wrong-import-position,reimported
 """Base workflow commands and sub-commands"""
 
 from .. import cmd_root
@@ -16,3 +16,4 @@ def cmd_launch():
 
 
 from .base import cmd_launch_workflow
+from .eos import cmd_launch_workflow

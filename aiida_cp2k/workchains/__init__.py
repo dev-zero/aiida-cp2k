@@ -8,3 +8,4 @@
 """AiiDA-CP2K workchains"""
 
 from .base import Cp2kBaseWorkChain
+from .eos import Cp2kEosWorkChain
